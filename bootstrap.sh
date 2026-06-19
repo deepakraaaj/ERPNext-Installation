@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # ============================================================================
-#  kl-erp onboarding bootstrap
-#  One command to get a brand-new Ubuntu machine running the full ERPNext
-#  stack (ERPNext + Frappe HR + India Compliance + Kriti app) via native bench,
-#  with a MariaDB Docker container and a web control panel.
+#  ERPNext installation bootstrap
+#  One command to get a brand-new Ubuntu machine running a full ERPNext
+#  stack (ERPNext + Frappe HR + India Compliance + optional custom app) via
+#  native bench, with a MariaDB Docker container and a web control panel.
 #
 #  Usage:   ./bootstrap.sh
 #  Re-runnable: yes — every step is idempotent, safe to run again.
@@ -145,14 +145,22 @@ get_app_pinned frappe           "https://github.com/frappe/frappe"              
 get_app_pinned erpnext          "https://github.com/frappe/erpnext"              "$ERPNEXT_VERSION"
 get_app_pinned hrms             "https://github.com/frappe/hrms"                 "$HRMS_VERSION"
 get_app_pinned india_compliance "https://github.com/resilient-tech/india-compliance" "$INDIA_COMPLIANCE_VERSION"
-# Kriti app (private, branch not tag)
-if [ ! -d "apps/$KRITI_APP_NAME" ]; then
-  bench get-app --branch "$KRITI_BRANCH" "$KRITI_REPO" || \
-    die "could not fetch $KRITI_REPO — check your Bitbucket SSH access (ssh -T git@bitbucket.org)"
-else
-  git -C "apps/$KRITI_APP_NAME" checkout -q "$KRITI_BRANCH" 2>/dev/null || true
+
+# Apps to install onto the site (in dependency order)
+INSTALL_APPS=(erpnext hrms india_compliance)
+
+# Optional custom app
+if [ -n "${CUSTOM_APP_REPO:-}" ]; then
+  if [ ! -d "apps/$CUSTOM_APP_NAME" ]; then
+    bench get-app ${CUSTOM_APP_BRANCH:+--branch "$CUSTOM_APP_BRANCH"} "$CUSTOM_APP_REPO" || \
+      die "could not fetch $CUSTOM_APP_REPO — check your access/credentials for that repo"
+  elif [ -n "${CUSTOM_APP_BRANCH:-}" ]; then
+    git -C "apps/$CUSTOM_APP_NAME" checkout -q "$CUSTOM_APP_BRANCH" 2>/dev/null || true
+  fi
+  INSTALL_APPS+=("$CUSTOM_APP_NAME")
+  ok "custom app: $CUSTOM_APP_NAME @ ${CUSTOM_APP_BRANCH:-default}"
 fi
-ok "apps pinned: frappe $FRAPPE_VERSION, erpnext $ERPNEXT_VERSION, hrms $HRMS_VERSION, india_compliance $INDIA_COMPLIANCE_VERSION, $KRITI_APP_NAME @ $KRITI_BRANCH"
+ok "apps pinned: frappe $FRAPPE_VERSION, erpnext $ERPNEXT_VERSION, hrms $HRMS_VERSION, india_compliance $INDIA_COMPLIANCE_VERSION"
 
 # pkg_resources fix (Python 3.12) + dependency resync
 ./env/bin/pip install --quiet "setuptools<81"
@@ -168,6 +176,7 @@ else
   echo -n "  waiting for redis"; for i in $(seq 1 15); do
     (echo > /dev/tcp/127.0.0.1/13000) 2>/dev/null && { echo " up"; break; }; echo -n "."; sleep 1; done
 
+  install_flags=(); for a in "${INSTALL_APPS[@]}"; do install_flags+=(--install-app "$a"); done
   bench new-site "$SITE" \
     --force \
     --db-root-username root \
@@ -175,10 +184,7 @@ else
     --admin-password "$ADMIN_PASSWORD" \
     --db-host 127.0.0.1 --db-port "$DB_PORT" \
     --mariadb-user-host-login-scope='%' \
-    --install-app erpnext \
-    --install-app hrms \
-    --install-app india_compliance \
-    --install-app "$KRITI_APP_NAME"
+    "${install_flags[@]}"
 
   # stop the temporary bench (the panel will manage it from now on)
   kill "$(cat /tmp/bench-bootstrap.pid)" 2>/dev/null || true

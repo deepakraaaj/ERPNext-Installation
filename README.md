@@ -1,10 +1,10 @@
-# kl-erp — One-command ERPNext dev setup
+# ERPNext Installation — One-command dev setup
 
-Get a brand-new Ubuntu machine running the full Kritilabs ERPNext stack in a
-single command — **native bench** (best for customization), with MariaDB in
-Docker and a web control panel so you never have to touch the terminal again.
+Get a brand-new Ubuntu machine running a full ERPNext stack in a single
+command — **native bench** (best for customization), with MariaDB in Docker and
+a web control panel so you barely have to touch the terminal.
 
-**Stack installed (pinned to production versions):**
+**Stack installed (pinned versions):**
 
 | App | Version |
 |-----|---------|
@@ -12,30 +12,30 @@ Docker and a web control panel so you never have to touch the terminal again.
 | ERPNext | v15.52.0 |
 | Frappe HR (hrms) | v15.39.1 |
 | India Compliance | v15.16.0 |
-| Kriti App (kriti_app) | `dev` branch |
+| *(optional)* your custom app | configurable |
+
+You can change any version, port, or the optional custom app in
+[`config.env`](config.env).
 
 ---
 
 ## Prerequisites
 
-1. **Ubuntu 22.04 or 24.04** (fresh or existing), with `sudo`.
-2. **Bitbucket SSH access** to the private Kriti repo. Verify with:
-   ```bash
-   ssh -T git@bitbucket.org      # should say "authenticated via ssh key"
-   ```
-   If not set up, add your SSH key to Bitbucket first.
-3. Internet access (the script downloads ERPNext, Node, Docker, etc.).
+1. **Ubuntu 22.04 or 24.04**, with `sudo`.
+2. Internet access (the script downloads ERPNext, Node, Docker, etc.).
+3. *Only if you configure a private custom app:* SSH/credentials on the machine
+   to clone that repo.
 
 > You do **not** need to install Python, Node, MariaDB, Docker, or bench
 > yourself — the script handles all of it.
 
 ---
 
-## Onboard (the whole thing)
+## Install (the whole thing)
 
 ```bash
-git clone <THIS_REPO_URL> kl-erp-setup
-cd kl-erp-setup
+git clone <THIS_REPO_URL> erpnext-installation
+cd erpnext-installation
 ./bootstrap.sh
 ```
 
@@ -54,6 +54,21 @@ Open the panel, click **▶ Start Bench**, then **🌐 Open ERPNext**. Done.
 
 ---
 
+## Adding a custom app (optional)
+
+Edit [`config.env`](config.env) **before** running `bootstrap.sh`:
+
+```bash
+CUSTOM_APP_REPO="git@github.com:your-org/your-app.git"
+CUSTOM_APP_BRANCH="main"
+CUSTOM_APP_NAME="your_app"        # the app's internal module name
+```
+
+Leave `CUSTOM_APP_REPO` empty to skip it. The control panel auto-detects
+whatever apps are installed — no code changes needed.
+
+---
+
 ## The Control Panel
 
 A tiny dashboard (Python stdlib only, no dependencies) that replaces the
@@ -65,7 +80,7 @@ service.
 | **Status** | Live cards for MariaDB, Bench, Web (auto-refresh) |
 | **Services** | Start / Stop / Restart Bench · Start / Stop the DB container |
 | **Maintenance** | Migrate · Clear Cache · Build Assets · Backup |
-| **Apps** | Live version + branch table |
+| **Apps** | Live version + branch table (auto-detected) |
 | **Log** | Live tail of bench output |
 
 Manage the panel service itself:
@@ -88,19 +103,7 @@ systemctl --user status  erpnext-panel
   `pkg_resources`, which Frappe 15.56 still imports.
 - **Patched wkhtmltopdf 0.12.6** (with Qt) — the plain `apt` version produces
   broken PDFs/print formats.
-- **Exact version pinning** — matches production so you don't chase
-  version-drift bugs.
-
----
-
-## Configuration
-
-Everything tunable lives in [`config.env`](config.env) — versions, ports, site
-name, passwords. Edit it **before** running `bootstrap.sh` if you need
-different values.
-
-> If you change `SITE`, `DB_PORT`, or `PANEL_PORT`, also update the matching
-> constants at the top of [`manage/panel.py`](manage/panel.py).
+- **Exact version pinning** — avoids version-drift bugs.
 
 ---
 

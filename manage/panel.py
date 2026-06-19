@@ -152,7 +152,16 @@ def run_async(name, cmd):
 
 
 def app_versions():
-    apps = ["frappe", "erpnext", "hrms", "india_compliance", "kriti_app"]
+    # Discover apps dynamically from the bench's apps.txt (falls back to dir scan),
+    # so this works for any stack without hardcoding app names.
+    apps = []
+    apps_txt = BENCH_DIR / "sites" / "apps.txt"
+    if apps_txt.exists():
+        apps = [a.strip() for a in apps_txt.read_text().splitlines() if a.strip()]
+    if not apps:
+        apps_dir = BENCH_DIR / "apps"
+        apps = sorted(p.name for p in apps_dir.iterdir() if p.is_dir()) if apps_dir.exists() else []
+    apps = (["frappe"] if "frappe" in apps else []) + [a for a in apps if a != "frappe"]
     out = {}
     for app in apps:
         init = BENCH_DIR / "apps" / app / app / "__init__.py"
