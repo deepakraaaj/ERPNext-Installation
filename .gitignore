@@ -1,6 +1,9 @@
 # Nothing here should ever contain the actual bench — that lives in ~/frappe-bench.
 # This repo is only the bootstrap + panel + config.
 
+# local config (may contain a private custom-app URL) — copy from config.env.example
+config.env
+
 *.log
 *.pid
 manage/bench.log

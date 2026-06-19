@@ -15,7 +15,8 @@ a web control panel so you barely have to touch the terminal.
 | *(optional)* your custom app | configurable |
 
 You can change any version, port, or the optional custom app in
-[`config.env`](config.env).
+[`config.env.example`](config.env.example) (copied to a local `config.env` on
+first run).
 
 ---
 
@@ -39,6 +40,10 @@ cd erpnext-installation
 ./bootstrap.sh
 ```
 
+On first run the script copies `config.env.example` → `config.env` (which is
+git-ignored, so a private custom-app URL never gets committed). Edit `config.env`
+if you need custom values, or just continue with the defaults.
+
 The script is **idempotent** — if anything fails (e.g. a flaky download), just
 run `./bootstrap.sh` again; it skips the steps already done.
 
@@ -56,7 +61,8 @@ Open the panel, click **▶ Start Bench**, then **🌐 Open ERPNext**. Done.
 
 ## Adding a custom app (optional)
 
-Edit [`config.env`](config.env) **before** running `bootstrap.sh`:
+Edit your local `config.env` (created from
+[`config.env.example`](config.env.example) on first run; git-ignored):
 
 ```bash
 CUSTOM_APP_REPO="git@github.com:your-org/your-app.git"

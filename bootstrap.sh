@@ -11,6 +11,14 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# config.env is git-ignored (it may hold a private custom-app URL). Create it
+# from the tracked template on first run.
+if [ ! -f "$HERE/config.env" ]; then
+  cp "$HERE/config.env.example" "$HERE/config.env"
+  echo "Created config.env from config.env.example."
+  echo "Edit it now if you need a custom app or different versions, then re-run — or continue with defaults."
+fi
 source "$HERE/config.env"
 
 # ---- pretty logging --------------------------------------------------------
