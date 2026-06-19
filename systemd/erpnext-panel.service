@@ -1,0 +1,13 @@
+[Unit]
+Description=ERPNext Bench Control Panel
+After=network.target docker.service
+
+[Service]
+Type=simple
+WorkingDirectory=@BENCH_DIR@
+ExecStart=@PYTHON@ @BENCH_DIR@/manage/panel.py
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

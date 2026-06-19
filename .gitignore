@@ -1,0 +1,10 @@
+# Nothing here should ever contain the actual bench — that lives in ~/frappe-bench.
+# This repo is only the bootstrap + panel + config.
+
+*.log
+*.pid
+manage/bench.log
+manage/bench.pid
+__pycache__/
+*.pyc
+.DS_Store
